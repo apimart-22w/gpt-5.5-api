@@ -1,0 +1,104 @@
+[
+  {
+    "slug": "01-idempotency-explainer",
+    "kind": "explanation",
+    "prompt": "Explain idempotency keys to a backend engineer in five sentences, then give one curl example.",
+    "model": "gpt-5.5",
+    "response": "Idempotency keys are client-generated unique tokens attached to requests that may be retried, typically `POST` requests with side effects.  \nThe server stores the first request’s outcome for that key, including success or failure response details.  \nIf the same key is received again, the server returns the stored response instead of executing the operation again.  \nThis prevents duplicate side effects such as charging a customer twice or creating duplicate orders during network retries.  \nKeys are usually scoped by endpoint, tenant, or user and expire after a defined TTL.\n\n```bash\ncurl -X POST https://api.example.com/payments \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Idempotency-Key: 8f3b7d1e-6c2a-4b5f-9c0e-2a7d9f6e1234\" \\\n  -d '{\n    \"amount\": 4999,\n    \"currency\": \"USD\",\n    \"customer_id\": \"cus_123\"\n  }'\n```",
+    "usage": {
+      "prompt_tokens": 25,
+      "completion_tokens": 321,
+      "total_tokens": 346,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "text_tokens": 0,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 0
+      },
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "input_tokens_details": null,
+      "output_tokens_details": null,
+      "claude_cache_creation_5_m_tokens": 0,
+      "claude_cache_creation_1_h_tokens": 0
+    },
+    "latency_s": 8.3,
+    "finish_reason": "stop",
+    "computed_cost_usd": 0.007804
+  },
+  {
+    "slug": "02-code-review-json",
+    "kind": "code review",
+    "prompt": "Review this Python snippet and list concrete issues only: requests.post(url, json=payload) inside a retry loop with a new uuid4 per attempt.",
+    "model": "gpt-5.5",
+    "response": "- No `timeout` specified: a retry attempt can hang indefinitely.\n- Retrying `POST` can create duplicate side effects if the server processed the request but the client timed out or lost the response.\n- Generating a new `uuid4` per attempt breaks idempotency; each retry looks like a new operation.\n- A changing UUID prevents server-side deduplication using an idempotency key.\n- A changing UUID makes client/server log correlation harder because each attempt has a different request identifier.\n- If the UUID is part of the resource identity, retries may create multiple resources instead of one.\n- If the UUID is included in `payload`, mutating the payload inside the loop may accidentally leak the last attempt’s UUID to later logic.\n- If response status codes are not checked, failures like `500`, `429`, or `400` may be treated as success.\n- If `raise_for_status()` is not used or equivalent handling is absent, HTTP errors may not trigger retry/error paths.\n- If all exceptions are retried blindly, non-retryable errors such as authentication failures or validation errors may be retried unnecessarily.\n- If there is no exponential backoff, retries can hammer the server.\n- If there is no jitter, many clients can retry in synchronized bursts.\n- If `Retry-After` is ignored, the client may violate server rate-limit guidance.\n- If there is no max retry limit, the loop can run forever.\n- If a new TCP connection is opened each time instead of using a `requests.Session`, retries are less efficient.",
+    "usage": {
+      "prompt_tokens": 36,
+      "completion_tokens": 474,
+      "total_tokens": 510,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "text_tokens": 0,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 149
+      },
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "input_tokens_details": null,
+      "output_tokens_details": null,
+      "claude_cache_creation_5_m_tokens": 0,
+      "claude_cache_creation_1_h_tokens": 0
+    },
+    "latency_s": 9.2,
+    "finish_reason": "stop",
+    "computed_cost_usd": 0.01152
+  },
+  {
+    "slug": "03-structured-extraction",
+    "kind": "structured output",
+    "prompt": "Return strict JSON with keys model, unit, price for: 'gpt-image-2.5-ext bills 0.0085 USD per 1080p image'. No prose.",
+    "model": "gpt-5.5",
+    "response": "{\"model\":\"gpt-image-2.5-ext\",\"unit\":\"1080p image\",\"price\":0.0085}",
+    "usage": {
+      "prompt_tokens": 44,
+      "completion_tokens": 83,
+      "total_tokens": 127,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "text_tokens": 0,
+        "audio_tokens": 0,
+        "image_tokens": 0
+      },
+      "completion_tokens_details": {
+        "text_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0,
+        "reasoning_tokens": 48
+      },
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "input_tokens_details": null,
+      "output_tokens_details": null,
+      "claude_cache_creation_5_m_tokens": 0,
+      "claude_cache_creation_1_h_tokens": 0
+    },
+    "latency_s": 3.9,
+    "finish_reason": "stop",
+    "computed_cost_usd": 0.002168
+  }
+]
