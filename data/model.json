@@ -11,18 +11,8 @@
         "cached_input": 0.4,
         "output": 24
       }
-    },
-    "gpt-5.5-pro": {
-      "list": {
-        "input": 30,
-        "output": 180
-      },
-      "effective": {
-        "input": 24,
-        "output": 144
-      }
     }
   },
   "source": "https://apimart.ai/en/pricing",
-  "extracted_at": "2026-09-20T06:34:01Z"
+  "extracted_at": "2026-09-21T06:38:35Z"
 }
